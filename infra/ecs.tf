@@ -1,10 +1,10 @@
 resource "aws_ecr_pull_through_cache_rule" "quay" {
-  ecr_repository_prefix = "quay"
+  ecr_repository_prefix = "${var.project}-${terraform.workspace}-quay"
   upstream_registry_url = "quay.io"
 }
 
 resource "aws_security_group" "ecs_cluster_sg" {
-  name        = "${var.project}-${var.environment}-ecs_cluster_sg"
+  name        = "${var.project}-${terraform.workspace}-ecs_cluster_sg"
   description = "Security group for ECS cluster in private subnets"
   vpc_id      = aws_vpc.keycloak.id
 
@@ -25,29 +25,29 @@ resource "aws_security_group" "ecs_cluster_sg" {
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecs_cluster_sg"
+    Name        = "${var.project}-${terraform.workspace}-ecs_cluster_sg"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_ecs_cluster" "keycloak_ecs_cluster" {
-  name = "${var.project}-${var.environment}-cluster"
+  name = "${var.project}-${terraform.workspace}-cluster"
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecs-cluster"
+    Name        = "${var.project}-${terraform.workspace}-ecs-cluster"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_cloudwatch_log_group" "keycloak_log_group" {
-  name = "${var.project}-${var.environment}"
+  name = "${var.project}-${terraform.workspace}"
 
   tags = {
-    Name        = "${var.project}-${var.environment}-log-group"
+    Name        = "${var.project}-${terraform.workspace}-log-group"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -63,8 +63,8 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
 
   container_definitions = jsonencode([
     {
-      name      = "${var.project}-${var.environment}-container",
-      image     = "762233757243.dkr.ecr.eu-central-1.amazonaws.com/quay/keycloak/keycloak:26.0.6"
+      name      = "${var.project}-${terraform.workspace}-container",
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.project}-${terraform.workspace}-quay/keycloak/keycloak:26.0.6"
       memory    = 2048
       cpu       = 1024
       essential = true
@@ -142,14 +142,14 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
   ])
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecs-task"
+    Name        = "${var.project}-${terraform.workspace}-ecs-task"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_ecs_service" "keycloak_ecs_service" {
-  name                  = "${var.project}-${var.environment}-ecs-service"
+  name                  = "${var.project}-${terraform.workspace}-ecs-service"
   cluster               = aws_ecs_cluster.keycloak_ecs_cluster.id
   task_definition       = "${aws_ecs_task_definition.keycloak_ecs_task.family}:${max(aws_ecs_task_definition.keycloak_ecs_task.revision, data.aws_ecs_task_definition.keycloak.revision)}"
   launch_type           = "FARGATE"
@@ -167,19 +167,19 @@ resource "aws_ecs_service" "keycloak_ecs_service" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.ecs_target_group.arn
-    container_name   = "${var.project}-${var.environment}-container"
+    container_name   = "${var.project}-${terraform.workspace}-container"
     container_port   = 8080
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecs-task"
+    Name        = "${var.project}-${terraform.workspace}-ecs-task"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_security_group" "vpc_endpoint_sg" {
-  name        = "${var.project}-${var.environment}-vpc-endpoint-sg"
+  name        = "${var.project}-${terraform.workspace}-vpc-endpoint-sg"
   vpc_id      = aws_vpc.keycloak.id
 
   ingress {
@@ -197,8 +197,8 @@ resource "aws_security_group" "vpc_endpoint_sg" {
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-vpc-endpoint-sg"
+    Name        = "${var.project}-${terraform.workspace}-vpc-endpoint-sg"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }

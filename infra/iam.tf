@@ -1,16 +1,16 @@
 resource "aws_iam_role" "ecsTaskExecutionRole" {
-  name                = "${var.project}-${var.environment}-execution-task-role"
+  name                = "${var.project}-${terraform.workspace}-execution-task-role"
   assume_role_policy  = data.aws_iam_policy_document.assume_role_policy.json
 
   tags = {
-    Name        = "${var.project}-${var.environment}-iam-ecsTaskExecutionRole-role"
+    Name        = "${var.project}-${terraform.workspace}-iam-ecsTaskExecutionRole-role"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_iam_policy" "ecr_pullthroughcache_policy" {
-  name        = "${var.project}-${var.environment}-ecr-pullthrough-policy"
+  name        = "${var.project}-${terraform.workspace}-ecr-pullthrough-policy"
   description = "Policy to allow ECS task execution role to interact with ECR pull-through cache"
   policy      = jsonencode({
     Version = "2012-10-17",
@@ -23,15 +23,15 @@ resource "aws_iam_policy" "ecr_pullthroughcache_policy" {
           "ecr:GetDownloadUrlForLayer",
           "ecr:DescribeImages"
         ],
-        Resource = "arn:aws:ecr:eu-central-1:762233757243:repository/quay/keycloak/*"
+        Resource = "arn:aws:ecr:${var.region}:${data.aws_caller_identity.current.account_id}:${var.project}-${terraform.workspace}-quay/keycloak"
       }
     ]
   })
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecr-pullthrough-policy"
+    Name        = "${var.project}-${terraform.workspace}-ecr-pullthrough-policy"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 

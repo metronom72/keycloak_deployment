@@ -1,5 +1,5 @@
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.project}-${var.environment}-alb-sg"
+  name        = "${var.project}-${terraform.workspace}-alb-sg"
   description = "Allow inbound traffic to ALB"
   vpc_id      = aws_vpc.keycloak.id
 
@@ -25,28 +25,28 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-alb-sg"
+    Name        = "${var.project}-${terraform.workspace}-alb-sg"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_lb" "public_alb" {
-  name               = "${var.project}-${var.environment}-alb"
+  name               = "${var.project}-${terraform.workspace}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = aws_subnet.public.*.id
 
   tags = {
-    Name        = "${var.project}-${var.environment}-alb"
+    Name        = "${var.project}-${terraform.workspace}-alb"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_lb_target_group" "ecs_target_group" {
-  name        = "${var.project}-${var.environment}-ecs-tg"
+  name        = "${var.project}-${terraform.workspace}-ecs-tg"
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.keycloak.id
@@ -62,9 +62,9 @@ resource "aws_lb_target_group" "ecs_target_group" {
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecs-tg"
+    Name        = "${var.project}-${terraform.workspace}-ecs-tg"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 

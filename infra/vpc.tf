@@ -4,9 +4,9 @@ resource "aws_vpc" "keycloak"  {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "${var.project}-${var.environment}-vpc"
+    Name = "${var.project}-${terraform.workspace}-vpc"
     Project = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -19,9 +19,9 @@ resource "aws_vpc_endpoint" "ecr_api" {
   private_dns_enabled = true
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecr-api-endpoint"
+    Name        = "${var.project}-${terraform.workspace}-ecr-api-endpoint"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -34,9 +34,9 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   private_dns_enabled = true
 
   tags = {
-    Name        = "${var.project}-${var.environment}-ecr-dkr-endpoint"
+    Name        = "${var.project}-${terraform.workspace}-ecr-dkr-endpoint"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -49,9 +49,9 @@ resource "aws_vpc_endpoint" "ecr_logs" {
   private_dns_enabled = true
 
   tags = {
-    Name        = "${var.project}-${var.environment}-logs-endpoint"
+    Name        = "${var.project}-${terraform.workspace}-logs-endpoint"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -62,9 +62,9 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = [aws_route_table.private_subnet.id]
 
   tags = {
-    Name        = "${var.project}-${var.environment}-s3-endpoint"
+    Name        = "${var.project}-${terraform.workspace}-s3-endpoint"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -77,9 +77,9 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name        = "${var.project}-${var.environment}-public-${count.index}"
+    Name        = "${var.project}-${terraform.workspace}-public-${count.index}"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
     Type        = "public"
   }
 }
@@ -88,9 +88,9 @@ resource "aws_internet_gateway" "public_igw" {
   vpc_id = aws_vpc.keycloak.id
 
   tags = {
-    Name        = "${var.project}-${var.environment}-internet-gateway"
+    Name        = "${var.project}-${terraform.workspace}-internet-gateway"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -102,9 +102,9 @@ resource "aws_subnet" "private" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name        = "${var.project}-${var.environment}-private-${count.index}"
+    Name        = "${var.project}-${terraform.workspace}-private-${count.index}"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
     Type        = "private"
   }
 }
@@ -118,9 +118,9 @@ resource "aws_route_table" "private_subnet" {
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-private-table"
+    Name        = "${var.project}-${terraform.workspace}-private-table"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -135,9 +135,9 @@ resource "aws_route_table" "public_subnet" {
   vpc_id = aws_vpc.keycloak.id
 
   tags = {
-    Name        = "${var.project}-${var.environment}-public-table"
+    Name        = "${var.project}-${terraform.workspace}-public-table"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -155,27 +155,27 @@ resource "aws_route_table_association" "public_subnets" {
 }
 
 resource "aws_db_subnet_group" "public_subnet_group" {
-  name       = "${var.project}-${var.environment}-public-subnet-group"
+  name       = "${var.project}-${terraform.workspace}-public-subnet-group"
   description = "Public subnet group"
   subnet_ids = aws_subnet.public[*].id
 
   tags = {
-    Name        = "${var.project}-${var.environment}-public-subnet-group"
+    Name        = "${var.project}-${terraform.workspace}-public-subnet-group"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
     Type        = "public"
   }
 }
 
 resource "aws_db_subnet_group" "private_subnet_group" {
-  name       = "${var.project}-${var.environment}-private-subnet-group"
+  name       = "${var.project}-${terraform.workspace}-private-subnet-group"
   description = "Private subnet group"
   subnet_ids = aws_subnet.private[*].id
 
   tags = {
-    Name        = "${var.project}-${var.environment}-private-subnet-group"
+    Name        = "${var.project}-${terraform.workspace}-private-subnet-group"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
     Type        = "private"
   }
 }

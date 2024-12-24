@@ -1,5 +1,5 @@
 resource "aws_security_group" "rds_sg" {
-  name        = "${var.project}-${var.environment}-rds-sg"
+  name        = "${var.project}-${terraform.workspace}-rds-sg"
   description = "Security group for RDS instance"
   vpc_id      = aws_vpc.keycloak.id
 
@@ -20,14 +20,14 @@ resource "aws_security_group" "rds_sg" {
   }
 
   tags = {
-    Name        = "${var.project}-${var.environment}-rds-sg"
+    Name        = "${var.project}-${terraform.workspace}-rds-sg"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier              = "keycloak-db"
+  identifier              = "${var.project}-${terraform.workspace}-database"
   allocated_storage       = 20
   engine                  = "postgres"
   engine_version          = "17.2"
@@ -42,8 +42,8 @@ resource "aws_db_instance" "postgres" {
   deletion_protection     = false
 
   tags = {
-    Name        = "${var.project}-${var.environment}-rds-db-instance"
+    Name        = "${var.project}-${terraform.workspace}-rds-db-instance"
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
