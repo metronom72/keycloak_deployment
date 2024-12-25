@@ -80,14 +80,6 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
       ]
       environment = [
         {
-          name  = "KEYCLOAK_ADMIN"
-          value = var.keycloak_admin_username
-        },
-        {
-          name  = "KEYCLOAK_ADMIN_PASSWORD"
-          value = var.keycloak_admin_password
-        },
-        {
           name  = "KC_DB"
           value = "postgres"
         },
@@ -100,14 +92,6 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
           value = var.db_name
         },
         {
-          name  = "KC_DB_USERNAME"
-          value = aws_db_instance.postgres.username
-        },
-        {
-          name  = "KC_DB_PASSWORD"
-          value = aws_db_instance.postgres.password
-        },
-        {
           name  = "KC_HEALTH_ENABLED"
           value = "true"
         },
@@ -118,6 +102,24 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
         {
           name  = "JAVA_OPTS"
           value = "-Xms256m -Xmx512m"
+        }
+      ]
+      secrets = [
+        {
+          name      = "KEYCLOAK_ADMIN"
+          valueFrom = "${aws_secretsmanager_secret.keycloak_admin.arn}:username::"
+        },
+        {
+          name      = "KEYCLOAK_ADMIN_PASSWORD"
+          valueFrom = "${aws_secretsmanager_secret.keycloak_admin.arn}:password::"
+        },
+        {
+          name      = "KC_DB_USERNAME"
+          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:username::"
+        },
+        {
+          name      = "KC_DB_PASSWORD"
+          valueFrom = "${aws_secretsmanager_secret.db_credentials.arn}:password::"
         }
       ]
       logConfiguration = {
@@ -156,6 +158,11 @@ resource "aws_ecs_service" "keycloak_ecs_service" {
   scheduling_strategy   = "REPLICA"
   desired_count         = 1
   force_new_deployment  = true
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   network_configuration {
     subnets          = aws_subnet.private.*.id

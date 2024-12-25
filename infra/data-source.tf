@@ -33,13 +33,15 @@ resource "aws_db_instance" "postgres" {
   engine_version          = "17.2"
   instance_class          = "db.t4g.micro"
   db_name                 = var.db_name
-  username                = var.db_username
-  password                = var.db_password
+  username                = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string).username
+  password                = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string).password
   db_subnet_group_name    = aws_db_subnet_group.private_subnet_group.name
   vpc_security_group_ids  = [aws_security_group.rds_sg.id, aws_security_group.ecs_cluster_sg.id]
   publicly_accessible     = false
-  skip_final_snapshot     = true
-  deletion_protection     = false
+  skip_final_snapshot     = false
+  deletion_protection     = true
+  final_snapshot_identifier = "${var.project}-${terraform.workspace}-database-final-snapshot"
+  copy_tags_to_snapshot     = true
 
   tags = {
     Name        = "${var.project}-${terraform.workspace}-rds-db-instance"

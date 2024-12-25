@@ -5,3 +5,7 @@ output "alb_dns" {
 output "workspace" {
   value = terraform.workspace
 }
+
+output "account_id" {
+  value = data.aws_caller_identity.current.account_id
+}

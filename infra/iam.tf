@@ -35,6 +35,33 @@ resource "aws_iam_policy" "ecr_pullthroughcache_policy" {
   }
 }
 
+resource "aws_iam_policy" "secrets_manager_policy" {
+  name        = "${var.project}-${terraform.workspace}-secrets-manager-policy"
+  description = "Policy to allow ECS task execution role to access Secrets Manager secrets"
+  policy      = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ],
+        "Resource": [
+          aws_secretsmanager_secret.db_credentials.arn,
+          aws_secretsmanager_secret.keycloak_admin.arn
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.project}-${terraform.workspace}-secrets-manager-policy"
+    Project     = var.project
+    Environment = terraform.workspace
+  }
+}
+
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionPolicy_AmazonEC2ContainerServiceforEC2Role" {
   role        = aws_iam_role.ecsTaskExecutionRole.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
@@ -48,4 +75,9 @@ resource "aws_iam_role_policy_attachment" "ecsTaskExecutionPolicy_AmazonECSTaskE
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionPolicy_AWSServiceRoleForECRPullThroughCache" {
   role       = aws_iam_role.ecsTaskExecutionRole.name
   policy_arn = aws_iam_policy.ecr_pullthroughcache_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "ecsTaskExecutionPolicy_AWSServiceRoleForSecretManager" {
+  role       = aws_iam_role.ecsTaskExecutionRole.name
+  policy_arn = aws_iam_policy.secrets_manager_policy.arn
 }
