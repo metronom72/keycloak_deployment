@@ -11,7 +11,6 @@ FROM quay.io/keycloak/keycloak:24.0.1 as builder
 ENV KC_METRICS_ENABLED=true
 ENV KC_HEALTH_ENABLED=true
 ENV KC_FEATURES=preview
-ENV KC_DB=postgres
 
 # https://github.com/keycloak/keycloak/discussions/10274
 # https://stackoverflow.com/questions/73049385/keycloak18-index-page-resource-not-found
@@ -49,15 +48,18 @@ FROM quay.io/keycloak/keycloak:24.0.1
 
 USER root
 COPY --from=ubi-micro-build /mnt/rootfs /
-USER keycloak
-COPY --from=builder /opt/keycloak /opt/keycloak
 
 WORKDIR /opt/keycloak
 
 # Allows server to start in prod mode. Actual certs provided by ALB.
 RUN keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" -keystore conf/server.keystore
+
 # Customize entrypoint and config
 COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+USER keycloak
+COPY --from=builder /opt/keycloak /opt/keycloak
 
 # Paranoia: Keycloak is not vulnerable to CVE-2021-44228
 # https://github.com/keycloak/keycloak-containers/issues/344
