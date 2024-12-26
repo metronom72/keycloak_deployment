@@ -62,7 +62,7 @@ resource "aws_lb_target_group" "ecs_target_group" {
   }
 
   tags = {
-    Name        = "${var.project}-${terraform.workspace}-ecs-tg"
+    Name        = "${var.project}.${terraform.workspace}-ecs-tg"
     Project     = var.project
     Environment = terraform.workspace
   }
@@ -76,5 +76,17 @@ resource "aws_lb_listener" "http_listener" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.ecs_target_group.arn
+  }
+}
+
+resource "aws_route53_record" "alb_record" {
+  zone_id = aws_route53_zone.subdomain_zone.zone_id
+  name    = "${var.project}.${terraform.workspace}.dorokhovich.de"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.public_alb.dns_name
+    zone_id                = aws_lb.public_alb.zone_id
+    evaluate_target_health = true
   }
 }

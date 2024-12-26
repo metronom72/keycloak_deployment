@@ -9,3 +9,11 @@ output "workspace" {
 output "account_id" {
   value = data.aws_caller_identity.current.account_id
 }
+
+output "hosted_zone" {
+  value = aws_route53_zone.subdomain_zone.name
+}
+
+output "name_servers" {
+  value = aws_route53_zone.subdomain_zone.name_servers
+}

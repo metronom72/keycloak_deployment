@@ -25,3 +25,8 @@ data "aws_secretsmanager_secret_version" "db_credentials" {
 data "aws_secretsmanager_secret_version" "keycloak_admin" {
   secret_id = aws_secretsmanager_secret.keycloak_admin.id
 }
+
+data "aws_route53_zone" "parent_zone" {
+  name         = "dorokhovich.de"
+  private_zone = false
+}
