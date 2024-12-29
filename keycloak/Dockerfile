@@ -54,15 +54,6 @@ COPY --from=builder /opt/keycloak /opt/keycloak
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Generate a self-signed keystore for HTTPS (optional)
-RUN if [ "$ENVIRONMENT" = "development" ] || [ ! -f /opt/keycloak/conf/server.keystore ]; then \
-        keytool -genkeypair -storepass password -storetype PKCS12 -keyalg RSA -keysize 2048 \
-            -dname "CN=server" -alias server -ext "SAN:c=DNS:localhost,IP:127.0.0.1" \
-            -keystore /opt/keycloak/conf/server.keystore; \
-    else \
-        echo "Keystore already exists or not in development environment. Skipping key generation."; \
-    fi
-
 # Runtime environment variables
 ENV KC_SPI_CONNECTIONS_JDBC_DRIVER_POSTGRESQL=org.postgresql.Driver
 ENV FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS=true

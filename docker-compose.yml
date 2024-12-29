@@ -42,6 +42,8 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
       KC_CACHE_CONFIG_FILE: "cache-ispn-jdbc-ping.xml"
+    volumes:
+      - ./server.keystore:/opt/keycloak/conf/server.keystore
 #    ports:
 #      - "8080:8080"
 #      - "8443:8443"
