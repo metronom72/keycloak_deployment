@@ -5,7 +5,6 @@
 
   <jgroups>
     <stack name="jdbc-ping-tcp" extends="tcp">
-
       <!--
       https://keycloak.discourse.group/t/use-of-jdbc-ping-with-keycloak-17-quarkus-distro/13571/4 -->
       <JDBC_PING connection_driver="org.postgresql.Driver"

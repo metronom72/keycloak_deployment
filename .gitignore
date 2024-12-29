@@ -4,3 +4,5 @@ infra/terraform.tfstate
 infra/terraform.tfstate.backup
 infra/errored.tfstate
 .idea
+tls.crt
+tls.key
