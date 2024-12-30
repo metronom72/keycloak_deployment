@@ -17,6 +17,8 @@ services:
     build:
       context: ./keycloak
       dockerfile: ./Dockerfile
+      args:
+        STOREPASS: "TMP_PASSWORD"
     depends_on:
       - db
     environment:
@@ -35,11 +37,8 @@ services:
       KC_HOSTNAME_STRICT_HTTPS: "true"
 
       KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_ADMIN_PASSWORD: "f"
-      KEYCLOAK_HOSTNAME: "localhost"
-    volumes:
-      - ./keycloak/server.keystore:/opt/keycloak/conf/server.keystore:ro
-      - ./keycloak/cache-ispn-jdbc-ping.xml:/opt/keycloak/conf/cache-ispn-jdbc-ping.xml:ro
+      KEYCLOAK_ADMIN_PASSWORD: "TEMP_PASSWORD"
+      STOREPASS: "TMP_PASSWORD"
     expose:
       - "8080"
       - "8443"

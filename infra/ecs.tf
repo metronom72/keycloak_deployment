@@ -64,11 +64,15 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
   container_definitions = jsonencode([
     {
       name      = "${var.project}-${terraform.workspace}-container",
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.project}-${terraform.workspace}-quay/keycloak/keycloak:26.0.6"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.project}/${terraform.workspace}:latest"
       memory    = 2048
       cpu       = 1024
       essential = true
       portMappings = [
+        {
+          containerPort = 8443
+          protocol      = "tcp"
+        },
         {
           containerPort = 8080
           protocol      = "tcp"
@@ -92,6 +96,10 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
           value = var.db_name
         },
         {
+          name  = "KC_FEATURES"
+          value = "preview"
+        },
+        {
           name  = "KC_HEALTH_ENABLED"
           value = "true"
         },
@@ -100,8 +108,20 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
           value = "true"
         },
         {
-          name  = "JAVA_OPTS"
-          value = "-Xms256m -Xmx512m"
+          name  = "KC_CACHE_CONFIG_FILE"
+          value = "cache-ispn-jdbc-ping.xml"
+        },
+        {
+          name  = "KC_HOSTNAME"
+          value = "${var.project}.${terraform.workspace}.dorokhovich.de"
+        },
+        {
+          name  = "KC_HOSTNAME_STRICT"
+          value = "true"
+        },
+        {
+          name  = "KC_HOSTNAME_STRICT_HTTPS"
+          value = "true"
         }
       ]
       secrets = [
@@ -130,11 +150,8 @@ resource "aws_ecs_task_definition" "keycloak_ecs_task" {
           awslogs-stream-prefix = "keycloak"
         }
       }
-      command = [
-        "start-dev",
-      ]
       healthCheck = {
-        command     = ["CMD-SHELL", "curl --head -fsS http://localhost:9000/health >> /var/log/keycloak-health.log 2>&1 || exit 0"]
+        command     = ["CMD-SHELL", "curl --head -fsS https://localhost:9000/health >> /var/log/keycloak-health.log 2>&1 || exit 0"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -156,8 +173,11 @@ resource "aws_ecs_service" "keycloak_ecs_service" {
   task_definition       = "${aws_ecs_task_definition.keycloak_ecs_task.family}:${max(aws_ecs_task_definition.keycloak_ecs_task.revision, data.aws_ecs_task_definition.keycloak.revision)}"
   launch_type           = "FARGATE"
   scheduling_strategy   = "REPLICA"
-  desired_count         = 1
+  desired_count         = 6
   force_new_deployment  = true
+
+  availability_zone_rebalancing = "ENABLED"
+  propagate_tags                = "TASK_DEFINITION"
 
   deployment_circuit_breaker {
     enable   = true
@@ -175,7 +195,7 @@ resource "aws_ecs_service" "keycloak_ecs_service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.ecs_target_group.arn
     container_name   = "${var.project}-${terraform.workspace}-container"
-    container_port   = 8080
+    container_port   = 8443
   }
 
   tags = {
@@ -188,6 +208,13 @@ resource "aws_ecs_service" "keycloak_ecs_service" {
 resource "aws_security_group" "vpc_endpoint_sg" {
   name        = "${var.project}-${terraform.workspace}-vpc-endpoint-sg"
   vpc_id      = aws_vpc.keycloak.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    security_groups = [aws_security_group.ecs_cluster_sg.id]
+  }
 
   ingress {
     from_port   = 443
