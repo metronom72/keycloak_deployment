@@ -17,18 +17,6 @@ services:
     build:
       context: ./keycloak
       dockerfile: ./Dockerfile
-      args:
-        KC_DB: "postgres"
-        KC_DB_URL: "jdbc:postgresql://db:5432/keycloak"
-        KC_DB_USERNAME: "keycloak"
-        KC_DB_PASSWORD: "secret"
-        KEYCLOAK_ADMIN: "admin"
-        KEYCLOAK_ADMIN_PASSWORD: "f"
-        KC_FEATURES: "preview"
-        KC_HEALTH_ENABLED: "true"
-        KC_METRICS_ENABLED: "true"
-        KC_CACHE_CONFIG_FILE: "cache-ispn-jdbc-ping.xml"
-    # container_name: keycloak
     depends_on:
       - db
     environment:
@@ -36,18 +24,22 @@ services:
       KC_DB_URL: "jdbc:postgresql://db:5432/keycloak"
       KC_DB_USERNAME: "keycloak"
       KC_DB_PASSWORD: "secret"
-      KEYCLOAK_ADMIN: "admin"
-      KEYCLOAK_ADMIN_PASSWORD: "f"
+
       KC_FEATURES: "preview"
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
       KC_CACHE_CONFIG_FILE: "cache-ispn-jdbc-ping.xml"
+
+      KC_HOSTNAME: "localhost"
+      KC_HOSTNAME_STRICT: "true"
+      KC_HOSTNAME_STRICT_HTTPS: "true"
+
+      KEYCLOAK_ADMIN: "admin"
+      KEYCLOAK_ADMIN_PASSWORD: "f"
+      KEYCLOAK_HOSTNAME: "localhost"
     volumes:
-      - ./server.keystore:/opt/keycloak/conf/server.keystore
-#    ports:
-#      - "8080:8080"
-#      - "8443:8443"
-#      - "7800:7800"
+      - ./keycloak/server.keystore:/opt/keycloak/conf/server.keystore:ro
+      - ./keycloak/cache-ispn-jdbc-ping.xml:/opt/keycloak/conf/cache-ispn-jdbc-ping.xml:ro
     expose:
       - "8080"
       - "8443"

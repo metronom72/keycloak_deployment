@@ -6,4 +6,4 @@ infra/errored.tfstate
 .idea
 tls.crt
 tls.key
-server.keystore
+keycloak/server.keystore
