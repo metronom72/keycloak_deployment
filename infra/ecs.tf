@@ -173,7 +173,7 @@ resource "aws_ecs_service" "keycloak_ecs_service" {
   task_definition       = "${aws_ecs_task_definition.keycloak_ecs_task.family}:${max(aws_ecs_task_definition.keycloak_ecs_task.revision, data.aws_ecs_task_definition.keycloak.revision)}"
   launch_type           = "FARGATE"
   scheduling_strategy   = "REPLICA"
-  desired_count         = 6
+  desired_count         = 2
   force_new_deployment  = true
 
   availability_zone_rebalancing = "ENABLED"
@@ -234,5 +234,81 @@ resource "aws_security_group" "vpc_endpoint_sg" {
     Name        = "${var.project}-${terraform.workspace}-vpc-endpoint-sg"
     Project     = var.project
     Environment = terraform.workspace
+  }
+}
+
+resource "aws_appautoscaling_target" "ecs_autoscaling_target" {
+  min_capacity       = 2
+  max_capacity       = 12
+  resource_id        = "service/${aws_ecs_cluster.keycloak_ecs_cluster.name}/${aws_ecs_service.keycloak_ecs_service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+
+  role_arn = aws_iam_role.appAutoscalingRole.arn
+}
+
+resource "aws_appautoscaling_policy" "cpu_scaling_policy" {
+  name               = "cpu-scaling-policy"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_autoscaling_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_autoscaling_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_autoscaling_target.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+
+    target_value = 60.0  # Target CPU utilization percentage
+    scale_in_cooldown  = 60
+    scale_out_cooldown = 60
+  }
+}
+
+resource "aws_appautoscaling_policy" "memory_scaling_policy" {
+  name               = "memory-scaling-policy"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_autoscaling_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_autoscaling_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_autoscaling_target.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+    }
+
+    target_value = 70.0  # Target Memory utilization percentage
+    scale_in_cooldown  = 60
+    scale_out_cooldown = 60
+  }
+}
+
+resource "aws_appautoscaling_policy" "request_scaling_policy" {
+  name               = "request-scaling-policy"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_autoscaling_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_autoscaling_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_autoscaling_target.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    customized_metric_specification {
+      metric_name        = "RequestCountPerTarget"
+      namespace          = "AWS/ApplicationELB"
+      statistic           = "Sum"
+      dimensions {
+        name  = "LoadBalancer"
+        value = aws_lb.public_alb.name
+      }
+
+      dimensions {
+        name  = "TargetGroup"
+        value = aws_lb_target_group.ecs_target_group.name
+      }
+      unit = "Count"
+    }
+
+    target_value = 300
+    scale_in_cooldown  = 60
+    scale_out_cooldown = 60
   }
 }

@@ -62,6 +62,46 @@ resource "aws_iam_policy" "secrets_manager_policy" {
   }
 }
 
+resource "aws_iam_role" "appAutoscalingRole" {
+  name = "appAutoscalingRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "application-autoscaling.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "app_autoscaling_policy" {
+  name = "app-autoscaling-policy"
+  role = aws_iam_role.appAutoscalingRole.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:UpdateService",
+          "ecs:DescribeServices",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:GetMetricData",
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms"
+        ]
+        Resource = "*"
+      },
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "ecsTaskExecutionPolicy_AmazonEC2ContainerServiceforEC2Role" {
   role        = aws_iam_role.ecsTaskExecutionRole.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
