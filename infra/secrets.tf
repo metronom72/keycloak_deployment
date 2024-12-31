@@ -1,7 +1,7 @@
 resource "aws_secretsmanager_secret" "db_credentials" {
   name        = "${var.project}-${terraform.workspace}-db-credentials-21834eb2d53904f4332d2471cb424e75"
   description = "Database credentials for ${var.project} in ${terraform.workspace}"
-  recovery_window_in_days = 0
+  recovery_window_in_days = 7
 
   tags = {
     Project     = var.project
@@ -20,7 +20,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials_version" {
 resource "aws_secretsmanager_secret" "keycloak_admin" {
   name        = "${var.project}-${terraform.workspace}-keycloak-admin-8f412c8df6212c366640563fd0d298bb"
   description = "Keycloak admin credentials for ${var.project} in ${terraform.workspace}"
-  recovery_window_in_days = 0
+  recovery_window_in_days = 7
 
   tags = {
     Project     = var.project

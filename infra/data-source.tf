@@ -33,8 +33,8 @@ resource "aws_db_instance" "postgres" {
   engine_version          = "17.2"
   instance_class          = "db.t4g.micro"
   db_name                 = var.db_name
-  username                = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string).username
-  password                = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string).password
+  username                = jsondecode(aws_secretsmanager_secret_version.db_credentials_version.secret_string).username
+  password                = jsondecode(aws_secretsmanager_secret_version.db_credentials_version.secret_string).password
   db_subnet_group_name    = aws_db_subnet_group.private_subnet_group.name
   vpc_security_group_ids  = [aws_security_group.rds_sg.id, aws_security_group.ecs_cluster_sg.id]
   publicly_accessible     = false
